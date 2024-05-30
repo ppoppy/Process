@@ -11,6 +11,8 @@
 
 using namespace std;
 
+int pid=1;
+
 //공백제거
 vector<string> deleteSpace(const string& cmd){
     vector<string> token;
@@ -45,12 +47,84 @@ vector<string> parse (string command){
     }
     return token;
 }
+int gcd(int x, int y) {
+    while (y != 0) {
+        int temp = y;
+        y = x % y;
+        x = temp;
+    }
+    return x;
+}
 
-void exec(){
+int prime(int x) {
+    vector<bool> isPrime(x + 1, true);
+    isPrime[0] = isPrime[1] = false;
+    for (int i = 2; i * i <= x; ++i) {
+        if (isPrime[i]) {
+            for (int j = i * i; j <= x; j += i) {
+                isPrime[j] = false;
+            }
+        }
+    }
+    return count(isPrime.begin(), isPrime.end(), true);
+}
+
+int sum(int x) {
+    return (x * (x + 1) / 2) % 1000000;
+}
+void exec(vector<string> cmd){
+    for (const auto& c : cmd){
+        stringstream ssr(c);
+        string tmp;
+        vector<string> token;
+
+        while( ssr >> tmp){
+            token.push_back(tmp);
+        }
+        if (token[0] == "echo" || token[0] == "&echo"){
+            cout << token[1] << endl;
+        }
+        else if (token[0] == "dummy" || token[0] == "&dummy"){
+            //아무일도 하지 않는 프로세스 생성
+        }
+        else if (token[0] == "gcd" || token[0] == "&gcd"){
+            int x = stoi(token[1]);
+            int y = stoi(token[2]);
+            cout << gcd(x, y) << endl;
+        }
+        else if (token[0] == "prime" || token[0] == "&prime"){
+            int x = stoi(token[1]);
+            cout << prime(x) << endl;
+        }
+        else if (token[0] == "sum" || token[0] == "&sum"){
+            int x = stoi(token[1]);
+            cout << sum(x) << endl;
+        }
+        else{
+            cout << "command is fail" << endl;
+        }
+    }
+    
 
 }
 
+void shell(){
+
+}
+
+void monitor(){
+    cout << "Running: " << "[" << pid << "]" << endl;
+    cout << "--------------------------------" << endl;
+    cout << "DQ: " << endl;
+    cout << "--------------------------------" << endl;
+    cout << "WQ: " << endl;
+}
+
+
+
 int main (){
+    monitor(); 
+     
     char buffer[MAX_PATH];
     GetModuleFileNameA(NULL, buffer, MAX_PATH);
     string::size_type pos = string(buffer).find_last_of("\\/");
@@ -73,7 +147,8 @@ int main (){
         while(getline(commands, command)){
             //cout << command << endl;
             
-            parse(command);
+            cmd = parse(command);
+            exec(cmd);
         }
         cout << endl;
     }

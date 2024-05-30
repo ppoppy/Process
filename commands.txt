@@ -1,1 +1,1 @@
-   echo age   ;    echo bbbbb;
+   echo age   ;    echo bbbbb;  sum 10; gcd 12 15;
