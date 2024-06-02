@@ -20,9 +20,9 @@ int pid = 1;
 struct Command {
     string command;
     string args;
-    int process = 1;        // -n
-    int duration = -1;     // -d, ±âº»°ª -1Àº Á¦ÇÑ ¾øÀ½
-    int period = 0;        // -p, ±âº»°ª 0Àº ¹Ýº¹ ¾øÀ½
+    int process = 1;        
+    int duration = -1;     
+    int period = 0;       
     int multithread = 1;
 
     Command() {};
@@ -48,9 +48,8 @@ vector<string> deleteSpace(const string& cmd) {
     return token;
 
 }
-//¸í·É¾î ÆÄ½Ì
 vector<string> parse(string command) {
-    stringstream ssr(command);  // string -> vector·Î º¯È¯, ÀÌÁ¦ ; ±âÁØÀ¸·Î ³ª´©±â
+    stringstream ssr(command);  
     string cmd;
     vector<string> token;
 
@@ -62,22 +61,79 @@ vector<string> parse(string command) {
         //cout << "here " << cmd  << "end" << endl;
     }
     for (const auto& c : token) {
-        cout << c << "endl" << endl;
+        //cout << c << "endl" << endl;
     }
     return token;
 }
 
-void echo(string args, int process, int duration, int period) {
-    pid++;
-    auto start = chrono::steady_clock::now();  // ½ÃÀÛ ½Ã°£ ±â·Ï
+void echo(string args) {
+    cout << args << endl;
+}
 
+void echo_divide(string args, int process, int duration, int period) {
+    pid++;
+    
+    auto start = chrono::steady_clock::now(); 
+    /*
     while (true) {
-        auto current = chrono::steady_clock::now(); // ÇöÀç ½Ã°£ ¾÷µ¥ÀÌÆ®
+        auto current = chrono::steady_clock::now();
         if (chrono::duration_cast<chrono::seconds>(current - start).count() >= 20) {
-            break; // ÃÑ ½ÇÇà ½Ã°£ÀÌ 20ÃÊ ÀÌ»óÀÌ¸é ¹Ýº¹¹® Á¾·á
+            break;
         }
         cout << args << endl;
-        this_thread.sleep_for(chrono::seconds(period));
+        std::this_thread::sleep_for(chrono::seconds(period));
+    }*/
+    if (process > 1) {
+        if (period > 0) {
+            if (duration > 0) {
+                while (true) {
+                    auto current = chrono::steady_clock::now();
+                    
+                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
+                        break;
+                    }
+                    echo(args);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+                   
+                }
+            }
+            else {
+                while (true) {
+                    echo(args);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+                }
+            }
+            
+        }
+        else {
+            for (int i = 1; i <= process; i++) {
+                echo(args);
+                pid++;
+            }
+        }
+    }
+    else {
+        if (period > 0) {
+            if (duration > 0) {
+                while (true) {
+                    
+                    auto current = chrono::steady_clock::now();
+                    
+                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
+                        break;
+                    }
+                    echo(args);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+
+                }
+            }
+            else {
+                cout << "ë¬´í•œë£¨í”„ ë°©ì§€" << endl;
+            }
+        }
+        else {
+            echo(args);
+        }
     }
 }
 
@@ -114,15 +170,18 @@ int sum(int x, int process, int duration, int period, int multithread) {
 
 void exec(vector<string> command) {
     //vector<string> cmds;
-    int process = 1;        // -n
-    int duration = -1;     // -d, ±âº»°ª -1Àº Á¦ÇÑ ¾øÀ½
-    int period = 0;        // -p, ±âº»°ª 0Àº ¹Ýº¹ ¾øÀ½
+    int process = 1;        
+    int duration = -1;     
+    int period = 0;        
     int multithread = 1;
     for (auto& c : command) {
-        cout << "c: " << c << endl;
-        if (c.front() == '&') {
+        //cout << "c: " << c << endl;
+        if (!c.empty()) {
+            if (c.front() == '&') {
 
+            }
         }
+        
     }
     for (auto& c : command) {
         stringstream ssr(c);
@@ -131,75 +190,76 @@ void exec(vector<string> command) {
         string args;
         int x;
         int y;
-        if (c.front() != '&') {
-            ssr >> cmd;
-            if (cmd == "echo") {
-                ssr >> args;
-            }
-            else if (cmd == "dummy") {
+        if (!c.empty()) {
+            if (c.front() != '&') {
+                ssr >> cmd;
+                if (cmd == "echo") {
+                    ssr >> args;
+                }
+                else if (cmd == "dummy") {
 
-            }
-            else if (cmd == "gcd") {
-                ssr >> tmp;
-                x = stoi(tmp);
-                ssr >> tmp;
-                y = stoi(tmp);
-            }
-            else if (cmd == "prime") {
-                ssr >> tmp;
-                x = stoi(tmp);
-            }
-            else if (cmd == "sum") {
-                ssr >> tmp;
-                x = stoi(tmp);
-            }
-            while (ssr >> tmp) {
-                if (tmp == "-n") {
-                    ssr >> tmp;
-                    process = stoi(tmp);
                 }
-                else if (tmp == "-d") {
+                else if (cmd == "gcd") {
                     ssr >> tmp;
-                    duration = stoi(tmp);
+                    x = stoi(tmp);
+                    ssr >> tmp;
+                    y = stoi(tmp);
                 }
-                else if (tmp == "-p") {
+                else if (cmd == "prime") {
                     ssr >> tmp;
-                    period = stoi(tmp);
-                    cout << "period: " << period << endl;
+                    x = stoi(tmp);
                 }
-                else if (tmp == "-m") {
+                else if (cmd == "sum") {
                     ssr >> tmp;
-                    multithread = stoi(tmp);
+                    x = stoi(tmp);
+                }
+                while (ssr >> tmp) {
+                    if (tmp == "-n") {
+                        ssr >> tmp;
+                        process = stoi(tmp);
+                    }
+                    else if (tmp == "-d") {
+                        ssr >> tmp;
+                        duration = stoi(tmp);
+                    }
+                    else if (tmp == "-p") {
+                        ssr >> tmp;
+                        period = stoi(tmp);
+                        //cout << "period: " << period << endl;
+                    }
+                    else if (tmp == "-m") {
+                        ssr >> tmp;
+                        multithread = stoi(tmp);
+                    }
+                    else {
+                        cout << "nothing" << endl;
+                    }
+                }
+                //ëª…ë ¹ì–´ ì‹¤í–‰
+                if (cmd == "echo") {
+                    echo_divide(args, process, duration, period);
+                }
+                else if (cmd == "dummy") {
+                    dummy();
+                }
+                else if (cmd == "gcd") {
+                    gcd(x, y, process, duration, period);
+                }
+                else if (cmd == "prime") {
+                    prime(x, process, duration, period);
+                }
+                else if (cmd == "sum") {
+                    sum(x, process, duration, period, multithread);
                 }
                 else {
-                    cout << "nothing" << endl;
+
                 }
+                process = 1;        
+                duration = -1;     
+                period = 0;        
+                multithread = 1;
             }
-            //¿©±â¼­ ¸í·É¾î ½ÇÇà
-            if (cmd == "echo") {
-                echo(args, process, duration, period);
-            }
-            else if (cmd == "dummy") {
-                dummy();
-            }
-            else if (cmd == "gcd") {
-                gcd(x, y, process, duration, period);
-            }
-            else if (cmd == "prime") {
-                prime(x, process, duration, period);
-            }
-            else if (cmd == "sum") {
-                sum(x, process, duration, period, multithread);
-            }
-            else {
-
-            }
-            process = 1;        // -n
-            duration = -1;     // -d, ±âº»°ª -1Àº Á¦ÇÑ ¾øÀ½
-            period = 0;        // -p, ±âº»°ª 0Àº ¹Ýº¹ ¾øÀ½
-            multithread = 1;
         }
-
     }
     /*
     for(auto& c:cmds){
@@ -255,6 +315,7 @@ int main() {
     //cout << "Current working directory: " << currentDirectory << endl;
 
     ifstream commands(currentDirectory + "\\commands.txt");
+    //cout << currentDirectory << "\\commands.txt" << endl;
     string command;
 
     vector<string> cmd;
@@ -276,6 +337,6 @@ int main() {
         cout << endl;
     }
 
-    commands.close();  // ÆÄÀÏÀ» ´ÝÀ½
+    commands.close();  
     return 0;
 }
