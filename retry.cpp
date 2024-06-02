@@ -11,42 +11,53 @@
 
 using namespace std;
 
-int pid=1;
+int pid = 1;
 
 //공백제거
-vector<string> deleteSpace(const string& cmd){
+vector<string> deleteSpace(const string& cmd) {
     vector<string> token;
     string temp = cmd;
 
-    // 앞뒤 공백 제거
     temp.erase(temp.begin(), find_if(temp.begin(), temp.end(), [](unsigned char ch) {
         return !isspace(ch);
-    }));
+        }));
     temp.erase(find_if(temp.rbegin(), temp.rend(), [](unsigned char ch) {
         return !isspace(ch);
-    }).base(), temp.end());
+        }).base(), temp.end());
 
     token.push_back(temp);
     return token;
 
 }
-
-vector<string> parse (string command){
+//명령어 파싱
+vector<string> parse(string command) {
     stringstream ssr(command);  // string -> vector로 변환, 이제 ; 기준으로 나누기
     string cmd;
     vector<string> token;
-    
+
     while (getline(ssr, cmd, ';')) {
         cout << "here " << cmd << endl;
-        vector<string> cleanedCmd = deleteSpace(cmd);    
+        vector<string> cleanedCmd = deleteSpace(cmd);
         token.insert(token.end(), cleanedCmd.begin(), cleanedCmd.end());
-        
+        token.push_back("");
+
     }
     for (const auto& c : token) {
         cout << c << endl;
     }
     return token;
 }
+
+
+//명령어 종류
+void echo() {
+    cout << "echo 함수 진입" << endl;
+}
+
+void dummy() {
+
+}
+
 int gcd(int x, int y) {
     while (y != 0) {
         int temp = y;
@@ -72,47 +83,66 @@ int prime(int x) {
 int sum(int x) {
     return (x * (x + 1) / 2) % 1000000;
 }
-void exec(vector<string> cmd){
-    for (const auto& c : cmd){
+
+//새로운 프로세스 생성, 파싱된 토큰을 전달 받아 명령어 실행한 후 args 메모리 해제
+void exec(vector<string> cmd) {
+    for (const auto& c : cmd) {
         stringstream ssr(c);
         string tmp;
         vector<string> token;
 
-        while( ssr >> tmp){
+        while (ssr >> tmp) {
             token.push_back(tmp);
         }
-        if (token[0] == "echo" || token[0] == "&echo"){
+        if (token[0] == "echo" || token[0] == "&echo") {
+            // if(token[2]=="-n"){
+
+            // }
+            // else if(token[2]=="-d"){}
+            // else if(token[2] == "-p"){
+            //     for(int i = 0; i < stoi(token[3]); i++){
+            //         cout << token[1] << endl;
+            //     }
+            // }
+            // else{
+            //     cout << token[1] << endl;
+            // }
+            if (token[2] == "") {
+                cout << """" << endl;
+            }
             cout << token[1] << endl;
         }
-        else if (token[0] == "dummy" || token[0] == "&dummy"){
+        else if (token[0] == "dummy" || token[0] == "&dummy") {
             //아무일도 하지 않는 프로세스 생성
         }
-        else if (token[0] == "gcd" || token[0] == "&gcd"){
+        else if (token[0] == "gcd" || token[0] == "&gcd") {
             int x = stoi(token[1]);
             int y = stoi(token[2]);
             cout << gcd(x, y) << endl;
         }
-        else if (token[0] == "prime" || token[0] == "&prime"){
+        else if (token[0] == "prime" || token[0] == "&prime") {
             int x = stoi(token[1]);
             cout << prime(x) << endl;
         }
-        else if (token[0] == "sum" || token[0] == "&sum"){
+        else if (token[0] == "sum" || token[0] == "&sum") {
             int x = stoi(token[1]);
             cout << sum(x) << endl;
         }
-        else{
+        else {
             cout << "command is fail" << endl;
         }
     }
-    
+
 
 }
 
-void shell(){
+
+
+void shell() {
 
 }
 
-void monitor(){
+void monitor() {
     cout << "Running: " << "[" << pid << "]" << endl;
     cout << "--------------------------------" << endl;
     cout << "DQ: " << endl;
@@ -122,9 +152,9 @@ void monitor(){
 
 
 
-int main (){
-    monitor(); 
-     
+int main() {
+    monitor();
+
     char buffer[MAX_PATH];
     GetModuleFileNameA(NULL, buffer, MAX_PATH);
     string::size_type pos = string(buffer).find_last_of("\\/");
@@ -133,20 +163,20 @@ int main (){
 
     ifstream commands(currentDirectory + "\\commands.txt");
     string command;
-    
+
     vector<string> cmd;
-    
 
-    
 
-    if(!commands.is_open()){
+
+
+    if (!commands.is_open()) {
         cout << "File not found" << endl;
-        return 1; 
+        return 1;
     }
     else {
-        while(getline(commands, command)){
+        while (getline(commands, command)) {
             //cout << command << endl;
-            
+
             cmd = parse(command);
             exec(cmd);
         }
