@@ -14,7 +14,7 @@
 using namespace std;
 
 int pid = 1;
-
+int seelpsecond = 3;
 
 
 struct Command {
@@ -108,8 +108,9 @@ void echo_divide(string args, int process, int duration, int period) {
         else {
             for (int i = 1; i <= process; i++) {
                 echo(args);
-                pid++;
+                pid++;  
             }
+            std::this_thread::sleep_for(chrono::seconds(seelpsecond));
         }
     }
     else {
@@ -129,10 +130,13 @@ void echo_divide(string args, int process, int duration, int period) {
             }
             else {
                 cout << "무한루프 방지" << endl;
+                std::this_thread::sleep_for(chrono::seconds(seelpsecond));
             }
         }
         else {
             echo(args);
+            std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+
         }
     }
 }
@@ -141,16 +145,85 @@ void dummy() {
     cout << "dummy" << endl;
 }
 
-int gcd(int x, int y, int process, int duration, int period) {
+void gcd(int x, int y, int process, int duration, int period) {
     while (y != 0) {
         int temp = y;
         y = x % y;
         x = temp;
     }
-    return x;
+    cout << x << endl;
 }
+void gcd_divide(int x, int y, int process, int duration, int period) {
+    pid++;
 
-int prime(int x, int process, int duration, int period) {
+    auto start = chrono::steady_clock::now();
+    /*
+    while (true) {
+        auto current = chrono::steady_clock::now();
+        if (chrono::duration_cast<chrono::seconds>(current - start).count() >= 20) {
+            break;
+        }
+        cout << args << endl;
+        std::this_thread::sleep_for(chrono::seconds(period));
+    }*/
+    if (process > 1) {
+        if (period > 0) {
+            if (duration > 0) {
+                while (true) {
+                    auto current = chrono::steady_clock::now();
+
+                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
+                        break;
+                    }
+                    gcd(x, y, process, duration, period);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+
+                }
+            }
+            else {
+                while (true) {
+                    gcd(x, y, process, duration, period);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+                }
+            }
+
+        }
+        else {
+            for (int i = 1; i <= process; i++) {
+                gcd(x, y, process, duration, period);
+                pid++;
+            }
+            std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+        }
+    }
+    else {
+        if (period > 0) {
+            if (duration > 0) {
+                while (true) {
+
+                    auto current = chrono::steady_clock::now();
+
+                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
+                        break;
+                    }
+                    gcd(x, y, process, duration, period);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+
+                }
+            }
+            else {
+                cout << "무한루프 방지" << endl;
+                std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+            }
+        }
+        else {
+            gcd(x, y, process, duration, period);
+            std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+
+        }
+    }
+}
+void prime(int x, int process, int duration, int period) {
     vector<bool> isPrime(x + 1, true);
     isPrime[0] = isPrime[1] = false;
     for (int i = 2; i * i <= x; ++i) {
@@ -160,11 +233,151 @@ int prime(int x, int process, int duration, int period) {
             }
         }
     }
-    return count(isPrime.begin(), isPrime.end(), true);
+    cout << count(isPrime.begin(), isPrime.end(), true) << endl;
 }
+void prime_divide(int x, int process, int duration, int period) {
+    pid++;
 
-int sum(int x, int process, int duration, int period, int multithread) {
-    return (x * (x + 1) / 2) % 1000000;
+    auto start = chrono::steady_clock::now();
+    /*
+    while (true) {
+        auto current = chrono::steady_clock::now();
+        if (chrono::duration_cast<chrono::seconds>(current - start).count() >= 20) {
+            break;
+        }
+        cout << args << endl;
+        std::this_thread::sleep_for(chrono::seconds(period));
+    }*/
+    if (process > 1) {
+        if (period > 0) {
+            if (duration > 0) {
+                while (true) {
+                    auto current = chrono::steady_clock::now();
+
+                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
+                        break;
+                    }
+                    prime(x, process, duration, period);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+
+                }
+            }
+            else {
+                while (true) {
+                    prime(x, process, duration, period);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+                }
+            }
+
+        }
+        else {
+            for (int i = 1; i <= process; i++) {
+                prime(x, process, duration, period);
+                pid++;
+            }
+            std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+        }
+    }
+    else {
+        if (period > 0) {
+            if (duration > 0) {
+                while (true) {
+
+                    auto current = chrono::steady_clock::now();
+
+                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
+                        break;
+                    }
+                    prime(x, process, duration, period);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+
+                }
+            }
+            else {
+                cout << "무한루프 방지" << endl;
+                std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+            }
+        }
+        else {
+            prime(x, process, duration, period);
+            std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+
+        }
+    }
+}
+void sum(int x, int process, int duration, int period, int multithread) {
+    long long result = static_cast<long long>(x) * (x + 1) / 2; // long long으로 캐스팅하여 계산
+    cout << result % 1000000 << endl;
+}
+void sum_divide(int x, int process, int duration, int period, int multithread) {
+    pid++;
+
+    auto start = chrono::steady_clock::now();
+    /*
+    while (true) {
+        auto current = chrono::steady_clock::now();
+        if (chrono::duration_cast<chrono::seconds>(current - start).count() >= 20) {
+            break;
+        }
+        cout << args << endl;
+        std::this_thread::sleep_for(chrono::seconds(period));
+    }*/
+    if (process > 1) {
+        if (period > 0) {
+            if (duration > 0) {
+                while (true) {
+                    auto current = chrono::steady_clock::now();
+
+                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
+                        break;
+                    }
+                    sum(x, process, duration, period, multithread);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+
+                }
+            }
+            else {
+                while (true) {
+                    sum(x, process, duration, period, multithread);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+                }
+            }
+
+        }
+        else {
+            for (int i = 1; i <= process; i++) {
+                sum(x, process, duration, period, multithread);
+                pid++;
+            }
+            std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+        }
+    }
+    else {
+        if (period > 0) {
+            if (duration > 0) {
+                while (true) {
+
+                    auto current = chrono::steady_clock::now();
+
+                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
+                        break;
+                    }
+                    sum(x, process, duration, period, multithread);
+                    std::this_thread::sleep_for(chrono::seconds(period));
+
+                }
+            }
+            else {
+                cout << "무한루프 방지" << endl;
+                std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+            }
+        }
+        else {
+            sum(x, process, duration, period, multithread);
+            std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+
+        }
+    }
 }
 
 
@@ -176,9 +389,11 @@ void exec(vector<string> command) {
     int multithread = 1;
     for (auto& c : command) {
         //cout << "c: " << c << endl;
+        
         if (!c.empty()) {
+            
             if (c.front() == '&') {
-
+                cout << "prompt> " << c << endl;
             }
         }
         
@@ -190,7 +405,9 @@ void exec(vector<string> command) {
         string args;
         int x;
         int y;
+        //unsigned long sum_x;
         if (!c.empty()) {
+            
             if (c.front() != '&') {
                 ssr >> cmd;
                 if (cmd == "echo") {
@@ -232,23 +449,28 @@ void exec(vector<string> command) {
                         multithread = stoi(tmp);
                     }
                     else {
-                        cout << "nothing" << endl;
+                        cout << "옵션을 잘 못 입력하셨습니다. 잘 못 입력된 값: " << tmp << endl;
                     }
                 }
                 //명령어 실행
                 if (cmd == "echo") {
+                    cout << "prompt> " << c << endl;
                     echo_divide(args, process, duration, period);
                 }
                 else if (cmd == "dummy") {
+                    cout << "prompt> " << c << endl;
                     dummy();
                 }
                 else if (cmd == "gcd") {
-                    gcd(x, y, process, duration, period);
+                    cout << "prompt> " << c << endl;
+                    gcd_divide(x, y, process, duration, period);
                 }
                 else if (cmd == "prime") {
+                    cout << "prompt> " << c << endl;
                     prime(x, process, duration, period);
                 }
                 else if (cmd == "sum") {
+                    cout << "prompt> " << c << endl;
                     sum(x, process, duration, period, multithread);
                 }
                 else {
