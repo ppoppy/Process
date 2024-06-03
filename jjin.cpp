@@ -9,13 +9,14 @@
 #include <cctype>
 #include <list>
 #include <chrono>
+#include <mutex>
 //#include <cctype>
 
 using namespace std;
-
+mutex sum_mutex;
 int pid = 1;
 int seelpsecond = 3;
-
+atomic<long long> total_sum(0);
 
 struct Command {
     string command;
@@ -305,9 +306,21 @@ void prime_divide(int x, int process, int duration, int period) {
         }
     }
 }
-void sum(int x, int process, int duration, int period, int multithread) {
+int sum(int x) {
     long long result = static_cast<long long>(x) * (x + 1) / 2; // long long으로 캐스팅하여 계산
-    cout << result % 1000000 << endl;
+    return result % 1000000;
+}
+void calculate_sum(int start, int end, int period, atomic<bool>& done) {
+    long long local_sum = 0;
+    for (int i = start; i <= end && !done; ++i) {
+        local_sum += i;
+        if (period > 0 && i % period == 0) {
+            this_thread::sleep_for(chrono::seconds(period));
+        }
+    }
+    lock_guard<mutex> lock(sum_mutex);
+    //cout << local_sum << endl;
+    total_sum += local_sum;
 }
 void sum_divide(int x, int process, int duration, int period, int multithread) {
     pid++;
@@ -322,49 +335,139 @@ void sum_divide(int x, int process, int duration, int period, int multithread) {
         cout << args << endl;
         std::this_thread::sleep_for(chrono::seconds(period));
     }*/
+    vector<thread> threads;
+    vector<int> thread(multithread);
+    int data_per_thread = x / multithread;
+    atomic<bool> done(false);
     if (process > 1) {
         if (period > 0) {
             if (duration > 0) {
                 while (true) {
                     auto current = chrono::steady_clock::now();
 
-                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
-                        break;
+                    for (int i = 0; i < multithread; ++i) {
+                        int start = i * data_per_thread + 1;
+                        int end = (i == multithread - 1) ? x : (i + 1) * data_per_thread;
+                        thread[i] = sum(data_per_thread);
+                        threads.emplace_back(calculate_sum, start, end, period, ref(done));
                     }
-                    sum(x, process, duration, period, multithread);
-                    std::this_thread::sleep_for(chrono::seconds(period));
+                    //sum(x, process, duration, period, multithread);
+                    
+                    if (duration > 0) {
+                        this_thread::sleep_for(chrono::seconds(duration));
+                        done = true;
+                    }
 
+                    
+                    for (auto& thread : threads) {
+                        thread.join();
+                    }
+
+                    for (int j = 0; j < process; ++j) {
+                        for (int i = 0; i < multithread; ++i) {
+                            thread[i] = sum(data_per_thread);
+                            cout << "thread " << i+1 << ": " << thread[i] << endl;
+                        }
+
+                        cout << "Total sum modulo : " << total_sum % 1000000 << endl;
+                        //sum(x, process, duration, period, multithread);
+                        std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+                    }
                 }
             }
             else {
-                while (true) {
-                    sum(x, process, duration, period, multithread);
-                    std::this_thread::sleep_for(chrono::seconds(period));
+                for (int i = 0; i < multithread; ++i) {
+                    int start = i * data_per_thread + 1;
+                    int end = (i == multithread - 1) ? x : (i + 1) * data_per_thread;
+                    thread[i] = sum(data_per_thread);
+                    threads.emplace_back(calculate_sum, start, end, period, ref(done));
+                }
+                //sum(x, process, duration, period, multithread);
+
+                if (duration > 0) {
+                    this_thread::sleep_for(chrono::seconds(duration));
+                    done = true;
+                }
+
+
+                for (auto& thread : threads) {
+                    thread.join();
+                }
+
+                for (int j = 0; j < process; ++j) {
+                    for (int i = 0; i < multithread; ++i) {
+                        thread[i] = sum(data_per_thread);
+                        cout << "thread " << i + 1 << ": " << thread[i] << endl;
+                    }
+
+                    cout << "Total sum modulo : " << total_sum % 1000000 << endl;
+                    //sum(x, process, duration, period, multithread);
+                    std::this_thread::sleep_for(chrono::seconds(seelpsecond));
                 }
             }
 
         }
         else {
-            for (int i = 1; i <= process; i++) {
-                sum(x, process, duration, period, multithread);
-                pid++;
+            
+            for (int i = 0; i < multithread; ++i) {
+                int start = i * data_per_thread + 1;
+                int end = (i == multithread - 1) ? x : (i + 1) * data_per_thread;
+                
+                threads.emplace_back(calculate_sum, start, end, period, ref(done));
             }
-            std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+
+
+            // 스레드 종료 대기
+            for (auto& thread : threads) {
+                thread.join();
+            }
+
+            for (int j = 0; j < process; ++j) {
+                for (int i = 0; i < multithread; ++i) {
+                    thread[i] = sum(data_per_thread);
+                    cout << "thread " << i + 1 << ": " << thread[i] << endl;
+                }
+
+                cout << "Total sum modulo : " << total_sum % 1000000 << endl;
+                //sum(x, process, duration, period, multithread);
+                std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+            }
+            
         }
     }
     else {
         if (period > 0) {
             if (duration > 0) {
                 while (true) {
-
                     auto current = chrono::steady_clock::now();
 
-                    if (chrono::duration_cast<chrono::seconds>(current - start).count() >= duration) {
-                        break;
+                    for (int i = 0; i < multithread; ++i) {
+                        int start = i * data_per_thread + 1;
+                        int end = (i == multithread - 1) ? x : (i + 1) * data_per_thread;
+                        thread[i] = sum(data_per_thread);
+                        threads.emplace_back(calculate_sum, start, end, period, ref(done));
                     }
-                    sum(x, process, duration, period, multithread);
-                    std::this_thread::sleep_for(chrono::seconds(period));
+                    //sum(x, process, duration, period, multithread);
 
+                    if (duration > 0) {
+                        this_thread::sleep_for(chrono::seconds(duration));
+                        done = true;
+                    }
+
+                    // 스레드 종료 대기
+                    for (auto& thread : threads) {
+                        thread.join();
+                    }
+                    
+                    for (int i = 0; i < multithread; ++i) {
+                        thread[i] = sum(data_per_thread);
+                        cout << "thread " << i + 1 << ": " << thread[i] << endl;
+                    }
+
+                    cout << "Total sum modulo : " << total_sum % 1000000 << endl;
+                    //sum(x, process, duration, period, multithread);
+                    std::this_thread::sleep_for(chrono::seconds(seelpsecond));
+                    
                 }
             }
             else {
@@ -373,7 +476,25 @@ void sum_divide(int x, int process, int duration, int period, int multithread) {
             }
         }
         else {
-            sum(x, process, duration, period, multithread);
+            for (int i = 0; i < multithread; ++i) {
+                int start = i * data_per_thread + 1;
+                int end = (i == multithread - 1) ? x : (i + 1) * data_per_thread;
+                thread[i] = sum(data_per_thread);           
+                //cout << "thread " << i << ": " << thread[i] << endl;
+                threads.emplace_back(calculate_sum, start, end, period, ref(done));
+            }
+
+
+            // 스레드 종료 대기
+            for (auto& thread : threads) {
+                thread.join();
+            }
+            for (int i = 0; i < multithread; ++i) {
+                thread[i] = sum(data_per_thread);
+                cout << "thread " << i + 1 << ": " << thread[i] << endl;
+            }
+            cout << "Total sum modulo : " << total_sum % 1000000 << endl;
+            //sum(x, process, duration, period, multithread);
             std::this_thread::sleep_for(chrono::seconds(seelpsecond));
 
         }
@@ -384,7 +505,7 @@ void sum_divide(int x, int process, int duration, int period, int multithread) {
 void exec(vector<string> command) {
     //vector<string> cmds;
     int process = 1;        
-    int duration = -1;     
+    int duration = 110;     
     int period = 0;        
     int multithread = 1;
     for (auto& c : command) {
@@ -467,17 +588,17 @@ void exec(vector<string> command) {
                 }
                 else if (cmd == "prime") {
                     cout << "prompt> " << c << endl;
-                    prime(x, process, duration, period);
+                    prime_divide(x, process, duration, period);
                 }
                 else if (cmd == "sum") {
                     cout << "prompt> " << c << endl;
-                    sum(x, process, duration, period, multithread);
+                    sum_divide(x, process, duration, period, multithread);
                 }
                 else {
 
                 }
                 process = 1;        
-                duration = -1;     
+                duration = 110;     
                 period = 0;        
                 multithread = 1;
             }
